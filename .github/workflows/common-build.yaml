@@ -276,6 +276,15 @@ jobs:
       if: ${{ false }}
     - name: Stage exact unsigned APK
       run: python3 .pack/stage_unsigned.py
+    - name: Keep unsigned output in owner-only draft release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: 'set -eu
+
+        gh release create "unsigned-${{ github.run_id }}-${{ github.run_attempt }}" pack-unsigned/* --draft --title "UNSIGNED
+        development build ${{ github.run_number }}.${{ github.run_attempt }}" --notes "Unverified unsigned build for local
+        signing and testing. Not a finished app release. Source commit: ${{ github.sha }}"'
     - name: Enable KVM for isolated emulator
       run: test -e /dev/kvm && sudo chmod a+rw /dev/kvm
     - name: Android 15 emulator smoke
@@ -290,15 +299,6 @@ jobs:
         disable-animations: true
         emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
         script: python3 .pack/emulator_smoke.py PackSync
-    - name: Keep unsigned output in owner-only draft release
-      env:
-        GH_TOKEN: ${{ github.token }}
-        GH_REPO: ${{ github.repository }}
-      run: 'set -eu
-
-        gh release create "unsigned-${{ github.run_id }}-${{ github.run_attempt }}" pack-unsigned/* --draft --title "UNSIGNED
-        development build ${{ github.run_number }}.${{ github.run_attempt }}" --notes "Unverified unsigned build for local
-        signing and testing. Not a finished app release. Source commit: ${{ github.sha }}"'
     timeout-minutes: 60
     permissions:
       contents: write

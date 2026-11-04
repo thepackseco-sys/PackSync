@@ -23,7 +23,12 @@ with tempfile.TemporaryDirectory(prefix="pack-emulator-") as d:
  badging=run([tools/'aapt2','dump','badging',signed]);assert "name='"+PACKAGE+"'" in badging
  adb('install',signed);print('PASS: signed synthetic APK installed with expected package',flush=True)
  adb('logcat','-c');adb('shell','monkey','-p',PACKAGE,'-c','android.intent.category.LAUNCHER','1');time.sleep(8)
- assert adb('shell','pidof',PACKAGE).strip(),'App process did not survive launch'
+ pid=adb('shell','pidof',PACKAGE,check=False).strip()
+ if not pid:
+  # Synthetic emulator only: retain the real Android crash instead of hiding it behind pidof's exit code.
+  print(adb('logcat','-b','crash','-d',check=False)[-14000:],flush=True)
+  print(adb('shell','dumpsys','activity','activities',check=False)[-3500:],flush=True)
+  raise RuntimeError('App process did not survive initial launch; Android diagnostics above')
  crashes=adb('logcat','-b','crash','-d');assert 'FATAL EXCEPTION' not in crashes,'App crashed during first launch'
  print('PASS: app launches without Java crash',flush=True)
  if APP=='PackSync':
