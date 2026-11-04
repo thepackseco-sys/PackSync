@@ -86,7 +86,7 @@ public class AppConfigReceiver extends BroadcastReceiver {
 
     private static boolean getPrefStartServiceOnBoot(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        return sp.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, false);
+        return sp.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, true);
     }
 
     private static void setPrefBtnStateForceStartStopAndNotify (final Context context, 

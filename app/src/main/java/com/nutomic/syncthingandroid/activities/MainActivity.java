@@ -644,7 +644,7 @@ public class MainActivity extends SyncthingActivity
      */
      private void updateExitFabVisibility() {
         if (mExitFab != null && mPreferences != null) {
-            boolean runAsService = mPreferences.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, false);
+            boolean runAsService = mPreferences.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, true);
             mExitFab.setVisibility(runAsService ? View.GONE : View.VISIBLE);
         }
     }

@@ -73,7 +73,7 @@
         <item quantity="one">%1$d fail on kopeeritud „%2$s“ kausta</item>
         <item quantity="other">%1$d faili on kopeeritud „%2$s“ kausta</item>
     </plurals>
-    <string name="app_name">Syncthing-Fork</string>
+    <string name="app_name">PackSync</string>
     <string name="add_folder">Lisa kaust</string>
     <string name="app_description">Avatud, vaba, usaldusväärne ja hajutatud võrgul põhinev failide sünkroonimisrakendus.</string>
     <string name="welcome_title">Tere tulemast - see on Syncthing Androidi jaoks</string>

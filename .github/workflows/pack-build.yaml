@@ -1,0 +1,14 @@
+name: PackSync unsigned validation
+'on':
+  workflow_dispatch: null
+permissions:
+  contents: read
+concurrency:
+  group: pack-validation
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.event.repository.private == false
+    uses: ./.github/workflows/common-build.yaml
+    with:
+      buildType: Release

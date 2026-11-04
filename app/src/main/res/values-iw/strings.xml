@@ -6,7 +6,7 @@
     <string name="storage_permission_desc">היישום Syncthing צריך לגשת לאחסון שלך כדי לבצע סנכרון קבצים.</string>
     <string name="dialog_all_files_access_not_supported">ההתקן שלך לא תומך בגישה לכל הקבצים</string>
     <string name="ignore_doze_permission_title">מיטוב סוללה</string>
-    <string name="app_name">Syncthing-Fork</string>
+    <string name="app_name">PackSync</string>
     <string name="app_description">יישום פתוח, אמין ומבוזר לסנכרון קבצים.</string>
     <string name="welcome_title">ברוך הבא אל Syncthing עבור אנדרואיד</string>
     <string name="name">שם</string>

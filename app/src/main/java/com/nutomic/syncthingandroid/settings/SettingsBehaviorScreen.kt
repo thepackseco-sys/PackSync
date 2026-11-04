@@ -20,7 +20,7 @@ fun EntryProviderScope<SettingsRoute>.settingsBehaviorEntry() {
 @Composable
 fun SettingsBehaviorScreen() {
 
-    val autoStart = rememberPreferenceState(Constants.PREF_START_SERVICE_ON_BOOT, false)
+    val autoStart = rememberPreferenceState(Constants.PREF_START_SERVICE_ON_BOOT, true)
     val broadcast = rememberPreferenceState(Constants.PREF_BROADCAST_SERVICE_CONTROL, false)
     val overwrite = rememberPreferenceState(Constants.PREF_ALLOW_OVERWRITE_FILES, false)
 

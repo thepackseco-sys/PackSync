@@ -32,6 +32,6 @@ public class AppPrefs {
 
     public static final boolean getStartServiceOnBoot(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        return sp.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, false);
+        return sp.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, true);
     }
 }

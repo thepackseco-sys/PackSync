@@ -288,7 +288,7 @@ private fun ExitDrawerItem() {
         icon = { Icon(Icons.AutoMirrored.Outlined.ExitToApp, null) },
         label = { Text(stringResource(R.string.exit)) },
         onClick = {
-            val isAutostartOn = prefs.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, false)
+            val isAutostartOn = prefs.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, true)
             if (isAutostartOn) {
                 showAlert = true
                 activity.closeDrawer()

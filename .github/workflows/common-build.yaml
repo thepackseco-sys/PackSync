@@ -1,321 +1,266 @@
 name: Common Build
-
 permissions:
   contents: read
-
-on:
+'on':
   workflow_call:
     inputs:
       applicationId:
-        description: 'Application ID'
+        description: Application ID
         required: false
         type: string
       buildType:
-        description: 'Gradle build type'
+        description: Gradle build type
         required: true
         type: string
       checkoutRef:
-        description: 'Git ref'
+        description: Git ref
         required: false
         type: string
       gradleOptions:
-        description: 'Gradle options'
+        description: Gradle options
         required: false
         type: string
-
 jobs:
   build:
     name: Build ${{ inputs.buildType }}
     runs-on: ubuntu-latest
     steps:
-      - name: Code checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          submodules: true
-          fetch-depth: 0
-          ref: ${{ inputs.checkoutRef }}
+    - name: Code checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        submodules: true
+        fetch-depth: 0
+        ref: ${{ inputs.checkoutRef }}
+    - name: Override applicationId
+      if: ${{ inputs.applicationId != '' }}
+      run: 'set -eu
 
-      - name: Override applicationId
-        if: ${{ inputs.applicationId != '' }}
-        run: |
-          set -eu
-          echo "Overriding applicationId with: ${{ inputs.applicationId }}"
-          sed -i 's|applicationId = ".*"|applicationId = "${{ inputs.applicationId }}"|' app/build.gradle.kts
+        echo "Overriding applicationId with: ${{ inputs.applicationId }}"
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: '3.11'
+        sed -i ''s|applicationId = ".*"|applicationId = "${{ inputs.applicationId }}"|'' app/build.gradle.kts
 
-      - name: Set up Java
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+        '
+    - name: Set up Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+      with:
+        python-version: '3.11'
+    - name: Set up Java
+      uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
+      with:
+        distribution: temurin
+        java-version: '21'
+    - name: Get NDK version from gradle catalog
+      id: get_ndk_version
+      run: 'set -eu
 
-      - name: Get NDK version from gradle catalog
-        id: get_ndk_version
-        run: |
-          set -eu
-          NDK_VERSION=$(grep 'ndk-version = ' gradle/libs.versions.toml | cut -d '"' -f 2)
-          echo "ndk_version=${NDK_VERSION}" >> $GITHUB_OUTPUT
+        NDK_VERSION=$(grep ''ndk-version = '' gradle/libs.versions.toml | cut -d ''"'' -f 2)
 
-      - name: Load pinned Go version
-        run: echo "GO_VERSION=$(grep -m1 '^go_version =' gradle/libs.versions.toml | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')" >> $GITHUB_ENV
+        echo "ndk_version=${NDK_VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: false
+        '
+    - name: Load pinned Go version
+      run: echo "GO_VERSION=$(grep -m1 '^go_version =' gradle/libs.versions.toml | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')"
+        >> $GITHUB_ENV
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: false
+    - name: Cache Go modules
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: '~/.cache/go-build
 
-      - name: Cache Go modules
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go${{ env.GO_VERSION }}-${{ hashFiles('syncthing/src/github.com/syncthing/syncthing/go.sum') }}
+          ~/go/pkg/mod
 
-      - name: Cache Gradle and Android user home
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ${{ runner.temp }}/.gradle/caches
-            ${{ runner.temp }}/.gradle/wrapper
-            ${{ runner.temp }}/.android
-          key: ${{ runner.os }}-gradle-android-${{ inputs.buildType }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-android-${{ inputs.buildType }}-
+          '
+        key: ${{ runner.os }}-go${{ env.GO_VERSION }}-${{ hashFiles('syncthing/src/github.com/syncthing/syncthing/go.sum')
+          }}
+      if: ${{ false }}
+    - name: Cache Gradle and Android user home
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: '${{ runner.temp }}/.gradle/caches
 
-      - name: Get syncthing commit hash for native libs cache
-        id: get_syncthing_commit
-        run: |
-          set -eu
-          SYNCTHING_COMMIT=$(cd syncthing/src/github.com/syncthing/syncthing && git rev-parse HEAD)
-          echo "syncthing_commit=${SYNCTHING_COMMIT}" >> $GITHUB_OUTPUT
-          echo "SYNCTHING_COMMIT=${SYNCTHING_COMMIT}" >> $GITHUB_ENV
-          
-          SYNCTHING_TAG=$(cd syncthing/src/github.com/syncthing/syncthing && git describe --always)
-          echo "syncthing_tag=${SYNCTHING_TAG}" >> $GITHUB_OUTPUT
+          ${{ runner.temp }}/.gradle/wrapper
 
-      - name: Cache prebuilt native libraries
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            /opt/syncthing-android-prereq/prebuilt-jnilibs
-          key: ${{ runner.os }}-prebuilt-jnilibs-go${{ env.GO_VERSION }}-ndk${{ steps.get_ndk_version.outputs.ndk_version }}-${{ steps.get_syncthing_commit.outputs.syncthing_tag }}-${{ steps.get_syncthing_commit.outputs.syncthing_commit }}
+          ${{ runner.temp }}/.android
 
-      - name: Set Gradle and Android user home environment variables
-        run: |
-          set -eu
-          echo "GRADLE_USER_HOME=${{ runner.temp }}/.gradle" >> $GITHUB_ENV
-          echo "ANDROID_USER_HOME=${{ runner.temp }}/.android" >> $GITHUB_ENV
-          
-          # Create directories to ensure they exist
-          mkdir -p "${{ runner.temp }}/.gradle"
-          mkdir -p "${{ runner.temp }}/.android"
-          
-          echo "Set GRADLE_USER_HOME to: ${{ runner.temp }}/.gradle"
-          echo "Set ANDROID_USER_HOME to: ${{ runner.temp }}/.android"
+          '
+        key: ${{ runner.os }}-gradle-android-${{ inputs.buildType }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties',
+          '**/libs.versions.toml') }}
+        restore-keys: '${{ runner.os }}-gradle-android-${{ inputs.buildType }}-
 
-      - name: Cache Android SDK
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/android-sdk
-          key: android-sdk-${{ runner.os }}-ndk${{ steps.get_ndk_version.outputs.ndk_version }}
+          '
+      if: ${{ false }}
+    - name: Get syncthing commit hash for native libs cache
+      id: get_syncthing_commit
+      run: 'set -eu
 
-      - name: Get Android cmdline-tools version from gradle catalog
-        id: get_cmdline_tools_version
-        run: |
-          set -eu
-          CMDLINE_TOOLS_VERSION=$(grep 'android-cmdline-tools = ' gradle/libs.versions.toml | cut -d '"' -f 2)
-          echo "cmdline_tools_version=${CMDLINE_TOOLS_VERSION}" >> $GITHUB_OUTPUT
+        SYNCTHING_COMMIT=$(cd syncthing/src/github.com/syncthing/syncthing && git rev-parse HEAD)
 
-      - name: Install Android SDK
-        run: |
-          set -eu
-          # Set environment variables (always needed regardless of cache status)
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          
-          # Check if SDK is already installed (from cache)
-          if [ -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
-            echo "Android SDK found in cache - skipping installation"
-          else
-            echo "Installing Android SDK from scratch"
-            # Install Android command line tools
-            SDK_TOOLS_VERSION="${{ steps.get_cmdline_tools_version.outputs.cmdline_tools_version }}"
-            SDK_TOOLS_FILE="commandlinetools-linux-${SDK_TOOLS_VERSION}_latest.zip"
-            
-            mkdir -p $HOME/android-sdk/cmdline-tools
-            cd $HOME/android-sdk/cmdline-tools
-            
-            wget -q "https://dl.google.com/android/repository/${SDK_TOOLS_FILE}"
-            unzip -q "${SDK_TOOLS_FILE}"
-            rm "${SDK_TOOLS_FILE}"
-            
-            # Move to expected location
-            mv cmdline-tools latest
-            
-            # Accept Android licenses (only needed for fresh installation)
-            yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          fi
+        echo "syncthing_commit=${SYNCTHING_COMMIT}" >> $GITHUB_OUTPUT
 
-      - name: Prepare prebuilt native libraries cache directory
-        run: |
-          set -eu
-          # Create cache directory with proper permissions for build scripts
-          sudo mkdir -p /opt/syncthing-android-prereq/prebuilt-jnilibs
-          sudo chown -R runner:runner /opt/syncthing-android-prereq || true
-          
-          echo "Prepared cache directory: /opt/syncthing-android-prereq/prebuilt-jnilibs"
-          echo "Current syncthing commit: ${SYNCTHING_COMMIT}"
-          
-          # Check if cached libraries exist for current commit
-          if [ -d "/opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}" ]; then
-            echo "Found cached native libraries for syncthing commit ${SYNCTHING_COMMIT}"
-            ls -la /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/
-          else
-            echo "No cached native libraries found for syncthing commit ${SYNCTHING_COMMIT} - will build from scratch"
-          fi
+        echo "SYNCTHING_COMMIT=${SYNCTHING_COMMIT}" >> $GITHUB_ENV
 
-      - name: Build app
-        run: |
-          set -eu
-          unset ANDROID_NDK_HOME
-          git config --global --add safe.directory '*'
-          ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} assemble${{ inputs.buildType }} ${{ inputs.gradleOptions }}
 
-      - name: Save prebuilt native libraries to cache
-        run: |
-          set -eu
-          # Create cache directory structure matching what build-syncthing.py expects
-          mkdir -p /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}
-          
-          # Copy built native libraries to cache if they exist
-          if [ -d "app/src/main/jniLibs" ]; then
-            cp -r app/src/main/jniLibs/* /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/
-            echo "Saved native libraries to cache for syncthing commit ${SYNCTHING_COMMIT}"
-            ls -la /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/
-          else
-            echo "No native libraries found to cache"
-          fi
+        SYNCTHING_TAG=$(cd syncthing/src/github.com/syncthing/syncthing && git describe --always)
 
-      - name: Extract application ID from gradle config
-        id: get_app_id
-        run: |
-          set -eu
-          APPLICATION_ID="$(grep "applicationId = " app/build.gradle.kts | cut -d '"' -f 2)"
-          echo "APPLICATION_ID=${APPLICATION_ID}" >> $GITHUB_ENV
-          echo "Extracted application ID: ${APPLICATION_ID}"
+        echo "syncthing_tag=${SYNCTHING_TAG}" >> $GITHUB_OUTPUT
 
-      - name: Get app version from libs.versions.toml
-        id: get_version
-        run: |
-          set -eu
-          VERSION=$(grep 'version-name = ' gradle/libs.versions.toml | cut -d '"' -f 2)
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+        '
+    - name: Cache prebuilt native libraries
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: '/opt/syncthing-android-prereq/prebuilt-jnilibs
 
-      - name: Rename unsigned debug artifacts
-        if: ${{ inputs.buildType == 'Debug' }}
-        run: |
-          set -eu
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            COMMIT_HASH_LONG="${{ github.event.pull_request.head.sha }}"
-          else
-            COMMIT_HASH_LONG="${{ github.sha }}"
-          fi
-          COMMIT_HASH_SHORT=$(echo "${COMMIT_HASH_LONG}" | cut -c1-7)
-          cd "app/build/outputs/apk/debug"
-          mv "app-debug-unsigned.apk" "${{ env.APPLICATION_ID }}.debug_v${{ env.VERSION }}_${COMMIT_HASH_SHORT}.apk"
+          '
+        key: ${{ runner.os }}-prebuilt-jnilibs-go${{ env.GO_VERSION }}-ndk${{ steps.get_ndk_version.outputs.ndk_version }}-${{
+          steps.get_syncthing_commit.outputs.syncthing_tag }}-${{ steps.get_syncthing_commit.outputs.syncthing_commit }}
+      if: ${{ false }}
+    - name: Set Gradle and Android user home environment variables
+      run: 'set -eu
 
-      - name: Rename unsigned release artifacts
-        if: ${{ inputs.buildType == 'Release' }}
-        run: |
-          set -eu
-          cd "app/build/outputs/apk/release"
-          for UNSIGNED_APK in *.apk; do
-            ABI="$(basename -- "${UNSIGNED_APK}")"
-            ABI="${ABI%-release-unsigned.apk}"
-            ABI="${ABI#app-}"
-            if [ "$ABI" = "universal" ]; then
-                ABI=""
-            else 
-                ABI="_${ABI}"
-            fi
-            UNSIGNED_APK_TARGET="${{ env.APPLICATION_ID }}_release_v${{ env.VERSION }}${ABI}.apk"
-            echo "Renaming ${UNSIGNED_APK} to ${UNSIGNED_APK_TARGET}"
-            mv "${UNSIGNED_APK}" "${UNSIGNED_APK_TARGET}"
-          done
+        echo "GRADLE_USER_HOME=${{ runner.temp }}/.gradle" >> $GITHUB_ENV
 
-      - name: Upload unsigned artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: unsigned-${{ env.APPLICATION_ID }}
-          retention-days: 1
-          path: |
-            app/build/outputs/apk/*/*.apk
+        echo "ANDROID_USER_HOME=${{ runner.temp }}/.android" >> $GITHUB_ENV
 
-      - name: Upload unsigned bundle artifact
-        if: ${{ inputs.gradleOptions == 'bundleRelease' }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: unsigned-bundle-${{ env.APPLICATION_ID }}
-          path: |
-            app/build/outputs/bundle/release/app-release.aab
 
-      - name: Check modified files
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          CHANGED_FILES="$(git diff --name-only HEAD^ HEAD)"
-          FILE_REGEX='\.(bash|bat|cmd|jar|kts|ps1|py|sh|yaml|yml)$'
-          FILE_LIST=""
-          FOUND="false"
-          for FILE in ${CHANGED_FILES}; do
-            if [[ "${FILE}" =~ ${FILE_REGEX} ]]; then
-              FOUND="true"
-              if [[ -z "${FILE_LIST}" ]]; then
-                FILE_LIST="${FILE}"
-              else
-                FILE_LIST="${FILE_LIST}, ${FILE}"
-              fi
-            fi
-          done
-          if [[ "${FOUND}" == "true" ]]; then
-            {
-              echo "## ⚠️ Pay attention to changed files"
-              echo '```'
-              echo "${FILE_LIST}"
-              echo '```'
-            } >> ${GITHUB_STEP_SUMMARY}
-          fi
+        # Create directories to ensure they exist
 
-      - name: Show lint summary if issues exist
-        run: |
-          BUILD_TYPE_LOWER="$(echo "${{ inputs.buildType }}" | tr '[:upper:]' '[:lower:]')"
-          REPORT="app/build/reports/lint-results-${BUILD_TYPE_LOWER}.txt"
-          if [ -f "${REPORT}" ]; then
-            if ( grep -Fq "No issues found." "${REPORT}" ); then
-              echo "## ✅️ Android Lint Passed" >> ${GITHUB_STEP_SUMMARY}
-            else
-              {
-                echo "## ⚠️ Android Lint Issues Found"
-                echo ""
-                echo '```'
-                cat "${REPORT}"
-                echo '```'
-              } >> ${GITHUB_STEP_SUMMARY}
-            fi
-          else
-            echo "## ❌ Android Lint report not found: ${REPORT}" >> ${GITHUB_STEP_SUMMARY}
-          fi
+        mkdir -p "${{ runner.temp }}/.gradle"
 
-      - name: Upload reports
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: reports-${{ env.APPLICATION_ID }}
-          path: |
-            app/build/reports/**
+        mkdir -p "${{ runner.temp }}/.android"
+
+
+        echo "Set GRADLE_USER_HOME to: ${{ runner.temp }}/.gradle"
+
+        echo "Set ANDROID_USER_HOME to: ${{ runner.temp }}/.android"
+
+        '
+    - name: Cache Android SDK
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: '~/android-sdk
+
+          '
+        key: android-sdk-${{ runner.os }}-ndk${{ steps.get_ndk_version.outputs.ndk_version }}
+      if: ${{ false }}
+    - name: Get Android cmdline-tools version from gradle catalog
+      id: get_cmdline_tools_version
+      run: 'set -eu
+
+        CMDLINE_TOOLS_VERSION=$(grep ''android-cmdline-tools = '' gradle/libs.versions.toml | cut -d ''"'' -f 2)
+
+        echo "cmdline_tools_version=${CMDLINE_TOOLS_VERSION}" >> $GITHUB_OUTPUT
+
+        '
+    - name: Install Android SDK
+      run: "set -eu\n# Set environment variables (always needed regardless of cache status)\necho \"ANDROID_HOME=$HOME/android-sdk\"\
+        \ >> $GITHUB_ENV\necho \"ANDROID_SDK_ROOT=$HOME/android-sdk\" >> $GITHUB_ENV\necho \"$HOME/android-sdk/cmdline-tools/latest/bin\"\
+        \ >> $GITHUB_PATH\n\n# Check if SDK is already installed (from cache)\nif [ -d \"$HOME/android-sdk/cmdline-tools/latest\"\
+        \ ]; then\n  echo \"Android SDK found in cache - skipping installation\"\nelse\n  echo \"Installing Android SDK from\
+        \ scratch\"\n  # Install Android command line tools\n  SDK_TOOLS_VERSION=\"${{ steps.get_cmdline_tools_version.outputs.cmdline_tools_version\
+        \ }}\"\n  SDK_TOOLS_FILE=\"commandlinetools-linux-${SDK_TOOLS_VERSION}_latest.zip\"\n  \n  mkdir -p $HOME/android-sdk/cmdline-tools\n\
+        \  cd $HOME/android-sdk/cmdline-tools\n  \n  wget -q \"https://dl.google.com/android/repository/${SDK_TOOLS_FILE}\"\
+        \n  unzip -q \"${SDK_TOOLS_FILE}\"\n  rm \"${SDK_TOOLS_FILE}\"\n  \n  # Move to expected location\n  mv cmdline-tools\
+        \ latest\n  \n  # Accept Android licenses (only needed for fresh installation)\n  yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager\
+        \ --licenses\nfi\n"
+    - name: Prepare prebuilt native libraries cache directory
+      run: "set -eu\n# Create cache directory with proper permissions for build scripts\nsudo mkdir -p /opt/syncthing-android-prereq/prebuilt-jnilibs\n\
+        sudo chown -R runner:runner /opt/syncthing-android-prereq || true\n\necho \"Prepared cache directory: /opt/syncthing-android-prereq/prebuilt-jnilibs\"\
+        \necho \"Current syncthing commit: ${SYNCTHING_COMMIT}\"\n\n# Check if cached libraries exist for current commit\n\
+        if [ -d \"/opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}\" ]; then\n  echo \"Found cached native\
+        \ libraries for syncthing commit ${SYNCTHING_COMMIT}\"\n  ls -la /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/\n\
+        else\n  echo \"No cached native libraries found for syncthing commit ${SYNCTHING_COMMIT} - will build from scratch\"\
+        \nfi\n"
+    - name: Build app
+      run: 'set -eu
+
+        unset ANDROID_NDK_HOME
+
+        git config --global --add safe.directory ''*''
+
+        ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} assemble${{ inputs.buildType }} ${{ inputs.gradleOptions
+        }}
+
+        '
+    - name: Save prebuilt native libraries to cache
+      run: "set -eu\n# Create cache directory structure matching what build-syncthing.py expects\nmkdir -p /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}\n\
+        \n# Copy built native libraries to cache if they exist\nif [ -d \"app/src/main/jniLibs\" ]; then\n  cp -r app/src/main/jniLibs/*\
+        \ /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/\n  echo \"Saved native libraries to cache for\
+        \ syncthing commit ${SYNCTHING_COMMIT}\"\n  ls -la /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/\n\
+        else\n  echo \"No native libraries found to cache\"\nfi\n"
+    - name: Extract application ID from gradle config
+      id: get_app_id
+      run: 'set -eu
+
+        APPLICATION_ID="$(grep "applicationId = " app/build.gradle.kts | cut -d ''"'' -f 2)"
+
+        echo "APPLICATION_ID=${APPLICATION_ID}" >> $GITHUB_ENV
+
+        echo "Extracted application ID: ${APPLICATION_ID}"
+
+        '
+    - name: Get app version from libs.versions.toml
+      id: get_version
+      run: 'set -eu
+
+        VERSION=$(grep ''version-name = '' gradle/libs.versions.toml | cut -d ''"'' -f 2)
+
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+        '
+    - name: Rename unsigned debug artifacts
+      if: ${{ inputs.buildType == 'Debug' }}
+      run: "set -eu\nif [ \"${{ github.event_name }}\" = \"pull_request\" ]; then\n  COMMIT_HASH_LONG=\"${{ github.event.pull_request.head.sha\
+        \ }}\"\nelse\n  COMMIT_HASH_LONG=\"${{ github.sha }}\"\nfi\nCOMMIT_HASH_SHORT=$(echo \"${COMMIT_HASH_LONG}\" | cut\
+        \ -c1-7)\ncd \"app/build/outputs/apk/debug\"\nmv \"app-debug-unsigned.apk\" \"${{ env.APPLICATION_ID }}.debug_v${{\
+        \ env.VERSION }}_${COMMIT_HASH_SHORT}.apk\"\n"
+    - name: Rename unsigned release artifacts
+      if: ${{ inputs.buildType == 'Release' }}
+      run: "set -eu\ncd \"app/build/outputs/apk/release\"\nfor UNSIGNED_APK in *.apk; do\n  ABI=\"$(basename -- \"${UNSIGNED_APK}\"\
+        )\"\n  ABI=\"${ABI%-release-unsigned.apk}\"\n  ABI=\"${ABI#app-}\"\n  if [ \"$ABI\" = \"universal\" ]; then\n    \
+        \  ABI=\"\"\n  else \n      ABI=\"_${ABI}\"\n  fi\n  UNSIGNED_APK_TARGET=\"${{ env.APPLICATION_ID }}_release_v${{\
+        \ env.VERSION }}${ABI}.apk\"\n  echo \"Renaming ${UNSIGNED_APK} to ${UNSIGNED_APK_TARGET}\"\n  mv \"${UNSIGNED_APK}\"\
+        \ \"${UNSIGNED_APK_TARGET}\"\ndone\n"
+    - name: Upload unsigned artifacts
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: unsigned-${{ env.APPLICATION_ID }}
+        retention-days: 1
+        path: 'app/build/outputs/apk/*/*.apk
+
+          '
+      if: ${{ false }}
+    - name: Upload unsigned bundle artifact
+      if: ${{ false }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: unsigned-bundle-${{ env.APPLICATION_ID }}
+        path: 'app/build/outputs/bundle/release/app-release.aab
+
+          '
+    - name: Check modified files
+      if: ${{ github.event_name == 'pull_request' }}
+      run: "CHANGED_FILES=\"$(git diff --name-only HEAD^ HEAD)\"\nFILE_REGEX='\\.(bash|bat|cmd|jar|kts|ps1|py|sh|yaml|yml)$'\n\
+        FILE_LIST=\"\"\nFOUND=\"false\"\nfor FILE in ${CHANGED_FILES}; do\n  if [[ \"${FILE}\" =~ ${FILE_REGEX} ]]; then\n\
+        \    FOUND=\"true\"\n    if [[ -z \"${FILE_LIST}\" ]]; then\n      FILE_LIST=\"${FILE}\"\n    else\n      FILE_LIST=\"\
+        ${FILE_LIST}, ${FILE}\"\n    fi\n  fi\ndone\nif [[ \"${FOUND}\" == \"true\" ]]; then\n  {\n    echo \"## \u26A0\uFE0F\
+        \ Pay attention to changed files\"\n    echo '```'\n    echo \"${FILE_LIST}\"\n    echo '```'\n  } >> ${GITHUB_STEP_SUMMARY}\n\
+        fi\n"
+    - name: Show lint summary if issues exist
+      run: "BUILD_TYPE_LOWER=\"$(echo \"${{ inputs.buildType }}\" | tr '[:upper:]' '[:lower:]')\"\nREPORT=\"app/build/reports/lint-results-${BUILD_TYPE_LOWER}.txt\"\
+        \nif [ -f \"${REPORT}\" ]; then\n  if ( grep -Fq \"No issues found.\" \"${REPORT}\" ); then\n    echo \"## \u2705\uFE0F\
+        \ Android Lint Passed\" >> ${GITHUB_STEP_SUMMARY}\n  else\n    {\n      echo \"## \u26A0\uFE0F Android Lint Issues\
+        \ Found\"\n      echo \"\"\n      echo '```'\n      cat \"${REPORT}\"\n      echo '```'\n    } >> ${GITHUB_STEP_SUMMARY}\n\
+        \  fi\nelse\n  echo \"## \u274C Android Lint report not found: ${REPORT}\" >> ${GITHUB_STEP_SUMMARY}\nfi\n"
+    - name: Upload reports
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: reports-${{ env.APPLICATION_ID }}
+        path: 'app/build/reports/**
+
+          '
+      if: ${{ false }}
+    timeout-minutes: 60

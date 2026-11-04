@@ -58,7 +58,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.github.catfriend1.syncthingfork"
+        applicationId = "com.packseco.packsync"
         minSdk = libs.versions.min.sdk.get().toInt()
         targetSdk = libs.versions.target.sdk.get().toInt()
         versionCode = libs.versions.version.code.get().toInt()

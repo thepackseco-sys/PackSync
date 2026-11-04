@@ -109,7 +109,7 @@ public class NotificationHandler {
                                                     Boolean persistNotificationDetails,
                                                     int onlineDeviceCount,
                                                     int totalSyncCompletion) {
-        boolean startServiceOnBoot = mPreferences.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, false);
+        boolean startServiceOnBoot = mPreferences.getBoolean(Constants.PREF_START_SERVICE_ON_BOOT, true);
         State currentServiceState = service.getCurrentState();
         boolean syncthingRunning = currentServiceState == SyncthingService.State.ACTIVE ||
                     currentServiceState == SyncthingService.State.STARTING;
