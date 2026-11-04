@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#0288D1</color>
-    <color name="primary_dark">#002171</color>
+    <color name="primary">#004A56</color>
+    <color name="primary_dark">#08121F</color>
 
     <!-- MainActivity start -->
-    <color name="bottom_navigation_bar">#263238</color>
+    <color name="bottom_navigation_bar">#08121F</color>
     <!-- MainActivity end -->
+    <color name="accent">#FFB454</color>
+    <color name="pack_background">#08121F</color>
+    <color name="pack_surface">#0E1C2C</color>
 </resources>

@@ -31,6 +31,11 @@ jobs:
         submodules: true
         fetch-depth: 0
         ref: ${{ inputs.checkoutRef }}
+    - name: Set Pack build version
+      run: python3 .pack/set_build_version.py
+      env:
+        PACK_RUN_NUMBER: ${{ github.run_number }}
+        PACK_RUN_ATTEMPT: ${{ github.run_attempt }}
     - name: Override applicationId
       if: ${{ inputs.applicationId != '' }}
       run: 'set -eu
@@ -181,8 +186,8 @@ jobs:
 
         git config --global --add safe.directory ''*''
 
-        ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} assemble${{ inputs.buildType }} ${{ inputs.gradleOptions
-        }}
+        ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} :app:test${{ inputs.buildType }}UnitTest assemble${{
+        inputs.buildType }} ${{ inputs.gradleOptions }}
 
         '
     - name: Save prebuilt native libraries to cache
@@ -263,4 +268,8 @@ jobs:
 
           '
       if: ${{ false }}
+    - name: Stage exact unsigned APK
+      run: python3 .pack/stage_unsigned.py
     timeout-minutes: 60
+    permissions:
+      contents: read

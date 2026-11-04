@@ -8,12 +8,8 @@ import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
-import com.nutomic.syncthingandroid.SyncthingApp;
-import com.nutomic.syncthingandroid.service.NotificationHandler;
 import com.nutomic.syncthingandroid.service.Constants;
-import com.nutomic.syncthingandroid.service.SyncthingService;
 
-import javax.inject.Inject;
 
 import static com.nutomic.syncthingandroid.service.RunConditionMonitor.ACTION_UPDATE_SHOULDRUN_DECISION;
 
@@ -36,17 +32,17 @@ public class AppConfigReceiver extends BroadcastReceiver {
 
     /**
      * Stop the Syncthing-Service
-     * If startServiceOnBoot is enabled the service must not be stopped. Instead a
-     * notification is presented to the user.
+     * Records the existing force-stop choice for the run-condition monitor.
+     * This action remains gated by the opt-in broadcast-control preference.
      */
     private static final String ACTION_STOP  = ".action.STOP";
 
-    @Inject NotificationHandler mNotificationHandler;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        ((SyncthingApp) context.getApplicationContext()).component().inject(this);
-        String intentAction = intent.getAction().replaceFirst(context.getPackageName(), "");
+        String intentAction = AppActionPolicy.suffix(context.getPackageName(),
+                intent == null ? null : intent.getAction());
+        if (intentAction == null) return;
         if (!getPrefBroadcastServiceControl(context)) {
             switch (intentAction) {
                 case ACTION_FOLLOW:
@@ -63,12 +59,12 @@ public class AppConfigReceiver extends BroadcastReceiver {
             case ACTION_FOLLOW:
                 Log.d(TAG, "followRunConditions by intent");
                 setPrefBtnStateForceStartStopAndNotify(context, Constants.BTNSTATE_NO_FORCE_START_STOP);
-                BootReceiver.startServiceCompat(context);
+                requestServiceStart(context);
                 break;
             case ACTION_START:
                 Log.d(TAG, "forceStart by intent");
                 setPrefBtnStateForceStartStopAndNotify(context, Constants.BTNSTATE_FORCE_START);
-                BootReceiver.startServiceCompat(context);
+                requestServiceStart(context);
                 break;
             case ACTION_STOP:
                 Log.d(TAG, "forceStop by intent");
@@ -76,6 +72,14 @@ public class AppConfigReceiver extends BroadcastReceiver {
                 break;
             default:
                 Log.w(TAG, "invalid intent action: " + intentAction);
+        }
+    }
+
+    private static void requestServiceStart(Context context) {
+        try {
+            BootReceiver.startServiceCompat(context);
+        } catch (IllegalStateException | SecurityException refused) {
+            Log.w(TAG, "Android refused background start; saved run-condition choice retained");
         }
     }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#45E6F5</color>
-    <color name="primary_dark">#006674</color>
-    <color name="accent">#FFB454</color>
+    <color name="primary">#006674</color>
+    <color name="primary_dark">#004A56</color>
+    <color name="accent">#805820</color>
     <color name="divider">#1F000000</color>
 
     <color name="text_black">#000000</color>
@@ -19,6 +19,8 @@
     <color name="bg_screen4">#5e7c8b</color>
 
     <!-- MainActivity start -->
-    <color name="bottom_navigation_bar">#006674</color>
+    <color name="bottom_navigation_bar">#102A3A</color>
     <!-- MainActivity end -->
+    <color name="pack_background">#F2F9FC</color>
+    <color name="pack_surface">#F8FCFE</color>
 </resources>

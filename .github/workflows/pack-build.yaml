@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/common-build.yaml
     with:
       buildType: Release
+    permissions:
+      contents: read
