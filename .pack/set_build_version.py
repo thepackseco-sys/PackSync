@@ -13,7 +13,7 @@ if 'com.packseco.packsync' in Path('app/build.gradle.kts').read_text():
  text,n=re.subn(r'^version-name = "[^"]+"',f'version-name = "{name}"',text,flags=re.M);assert n==1
  catalog.write_text(text)
 else:
- name="1.0.0."+str(run);code=1000000+run
+ name="1.0.0."+str(run);code=1000000+run*100+50
  p=Path('app/build.gradle.kts');text=p.read_text()
  text,n=re.subn(r'versionCode = [0-9]+',f'versionCode = {code}',text,count=1);assert n==1
  text,n=re.subn(r'versionName = "[^"]+"',f'versionName = "{name}"',text,count=1);assert n==1
