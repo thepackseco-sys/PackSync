@@ -276,6 +276,20 @@ jobs:
       if: ${{ false }}
     - name: Stage exact unsigned APK
       run: python3 .pack/stage_unsigned.py
+    - name: Enable KVM for isolated emulator
+      run: test -e /dev/kvm && sudo chmod a+rw /dev/kvm
+    - name: Android 15 emulator smoke
+      timeout-minutes: 20
+      uses: ReactiveCircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
+      with:
+        api-level: 35
+        arch: x86_64
+        target: google_apis
+        cores: 2
+        ram-size: 2048M
+        disable-animations: true
+        emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+        script: python3 .pack/emulator_smoke.py PackSync
     timeout-minutes: 60
     permissions:
       contents: read
