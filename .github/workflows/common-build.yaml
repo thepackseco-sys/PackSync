@@ -179,6 +179,12 @@ jobs:
         \ libraries for syncthing commit ${SYNCTHING_COMMIT}\"\n  ls -la /opt/syncthing-android-prereq/prebuilt-jnilibs/${SYNCTHING_COMMIT}/\n\
         else\n  echo \"No cached native libraries found for syncthing commit ${SYNCTHING_COMMIT} - will build from scratch\"\
         \nfi\n"
+    - name: Run pure Java action-policy regression
+      run: 'mkdir -p .pack/test-classes
+
+        javac -d .pack/test-classes app/src/main/java/com/nutomic/syncthingandroid/receiver/AppActionPolicy.java .pack/tests/ActionPolicyRegression.java
+
+        java -cp .pack/test-classes com.nutomic.syncthingandroid.receiver.ActionPolicyRegression'
     - name: Build app
       run: 'set -eu
 
@@ -186,8 +192,8 @@ jobs:
 
         git config --global --add safe.directory ''*''
 
-        ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} :app:test${{ inputs.buildType }}UnitTest assemble${{
-        inputs.buildType }} ${{ inputs.gradleOptions }}
+        ./gradlew --no-daemon buildNative lint${{ inputs.buildType }} assemble${{ inputs.buildType }} ${{ inputs.gradleOptions
+        }}
 
         '
     - name: Save prebuilt native libraries to cache
